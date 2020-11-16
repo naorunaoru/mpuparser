@@ -1,6 +1,6 @@
 import bp from "binary-parser";
 import { readFile, writeFile } from "fs";
-import { parse } from "path";
+import { parse, format } from "path";
 
 const { Parser } = bp;
 
@@ -26,15 +26,12 @@ const mpuReading = new Parser()
 const mpuBlock = new Parser()
   .endianess("little")
   .uint16("count")
-  .uint16("overrun")
+  .uint16("overruns")
   .array("readings", {
     type: mpuReading,
     length: 31,
   })
-  .array("pad", {
-    type: "uint8",
-    lengthInBytes: 12,
-  });
+  .seek(12);
 
 const mpuRawStream = new Parser()
   .endianess("little")
@@ -50,17 +47,19 @@ readFile(src, function (err, data) {
 
   const parsed = mpuRawStream.parse(data);
 
-  console.log(
-    `length: ${
-      parsed.blocks.reduce((count, block) => count + block.readings.length, 0) /
-      RATE
-    } sec`
-  );
+  const stat = parsed.blocks.reduce((acc, block) => {
+    acc.count += block.count;
+    acc.overruns += block.overruns;
+    return acc;
+  }, { count: 0, overruns: 0 });
+
+  console.log(`length: ${stat.count / RATE} sec`);
+  console.log(`overruns: ${stat.overruns}`);
 
   const out = {
     frequency: RATE,
     angular_velocity_rad_per_sec: parsed.blocks.map((block) =>
-      block.readings.reduce((acc, item) => {
+      block.readings.slice(0, block.count).reduce((acc, item) => {
         const { gx, gy, gz } = item;
 
         acc.push(...[gx, gy, gz].map(convertRawToRadiansPerSecond));
@@ -70,10 +69,14 @@ readFile(src, function (err, data) {
     ),
   };
 
-  const resPath = `${dstDir}/${pathObject.name}.json`;
+  const resPath = format({
+    dir: dstDir,
+    name: pathObject.name,
+    ext: '.json'
+  });
 
   console.log(`Writing to ${resPath}`);
-  
+
   writeFile(resPath, JSON.stringify(out), function (err) {
     console.log(`Success!`)
     if (err) {
