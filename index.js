@@ -6,7 +6,7 @@ const { Parser } = bp;
 
 const [src, dstDir] = process.argv.slice(2);
 
-// logger sets FS_SEL to 3: range is ±2000°/s, sensitivity is 16.4 LSB/°/s
+// logger sets FS_SEL to 3: range is ±2000°/s, sensitivity is 16.4°/s
 const GYRO_SCALE = 16.4; 
 // logging rate in readings/s
 const RATE = 500;
