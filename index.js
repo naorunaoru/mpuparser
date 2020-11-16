@@ -16,9 +16,6 @@ const convertRawToRadiansPerSecond = (raw) => (raw / GYRO_SCALE) * (Math.PI / 18
 const mpuReading = new Parser()
   .endianess("little")
   .uint32("timestamp")
-  .int16("ax")
-  .int16("ay")
-  .int16("az")
   .int16("gx")
   .int16("gy")
   .int16("gz");
@@ -29,9 +26,9 @@ const mpuBlock = new Parser()
   .uint16("overruns")
   .array("readings", {
     type: mpuReading,
-    length: 31,
+    length: 50,
   })
-  .seek(12);
+  .seek(8);
 
 const mpuRawStream = new Parser()
   .endianess("little")
