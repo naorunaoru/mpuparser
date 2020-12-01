@@ -1,10 +1,21 @@
+#!/usr/bin/env node
+
 import bp from "binary-parser";
 import { readFile, writeFile } from "fs";
 import { parse, format } from "path";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers'
 
 const { Parser } = bp;
 
-const [src, dstDir] = process.argv.slice(2);
+const argv = yargs(hideBin(process.argv))
+  .usage('Usage: $0 <source> [<destination path>]')
+  .demandCommand(1)
+  .hide('help')
+  .hide('version')
+  .argv
+
+const [src, dstDir] = argv._;
 
 // logger sets FS_SEL to 3: range is ±2000°/s, sensitivity is 16.4°/s
 const GYRO_SCALE = 16.4; 
