@@ -4,18 +4,18 @@ import bp from "binary-parser";
 import { readFile, writeFile } from "fs";
 import { parse, format } from "path";
 import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers'
+import { hideBin } from 'yargs/helpers';
 
 const { Parser } = bp;
 
 const argv = yargs(hideBin(process.argv))
-  .usage('Usage: $0 <source> [<destination path>]')
+  .usage('Usage: $0 <source> [<destination>]')
   .demandCommand(1)
   .hide('help')
   .hide('version')
   .argv
 
-const [src, dstDir] = argv._;
+const [src, dst] = argv._;
 
 // logger sets FS_SEL to 3: range is ±2000°/s, sensitivity is 16.4°/s
 const GYRO_SCALE = 16.4; 
@@ -53,7 +53,7 @@ readFile(src, function (err, data) {
     return console.log(err);
   }
 
-  const pathObject = parse(src);
+  const srcPathObject = parse(src);
 
   const parsed = mpuRawStream.parse(data);
 
@@ -103,10 +103,12 @@ readFile(src, function (err, data) {
     ),
   };
 
+  const dstPathObject = parse(dst);
+
   const resPath = format({
-    dir: dstDir,
-    name: pathObject.name,
-    ext: '.json'
+    dir: dstPathObject.dir,
+    name: dstPathObject.name || srcPathObject.name,
+    ext: dstPathObject.ext || '.json'
   });
 
   writeFile(resPath, JSON.stringify(out), function (err) {
